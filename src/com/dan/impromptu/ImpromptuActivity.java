@@ -4,12 +4,15 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import com.google.android.maps.GeoPoint;
@@ -19,6 +22,8 @@ import com.google.android.maps.MapView;
 
 import org.json.JSONArray;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Timer;
 
 public class ImpromptuActivity extends MapActivity implements LocationListener {
@@ -45,6 +50,8 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
     
     Timer timeout;
     
+    Geocoder coder;
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,21 +59,48 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        
-        mapView = (MapView) findViewById(R.id.mapview);
+        coder = new Geocoder(this);
+        mapView = (ImpromptuMapView) findViewById(R.id.mapview);
+        ((ImpromptuMapView) mapView).setContext(this);
         mapView.setBuiltInZoomControls(true);
         mapController = mapView.getController();
         Log.d(TAG, "Showing dialog");
         dialog = ProgressDialog.show(ImpromptuActivity.this, "", 
             "Loading. Please wait...", true);
         
+        final EditText input = new EditText(this);
+        
         AlertDialog.Builder builder = new AlertDialog.Builder(ImpromptuActivity.this);
         
         builder.setMessage("Could not geolocate you.")
+        .setView(input)
         .setCancelable(false)
         .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                 // TODO
+                 Log.d(TAG, "Got value " + input.getText() );
+                 try {
+                    List<Address> addresses = coder.getFromLocationName(input.getText().toString(), 1);
+                    if (addresses != null && !addresses.isEmpty()) {
+                        Address address = addresses.get(0);
+                        Location loc = new Location("geocoder");
+                        loc.setLatitude(address.getLatitude());
+                        loc.setLongitude(address.getLongitude());
+                        
+                        currentLocation = loc;
+                        
+                    }
+                    else {
+                        Log.e(TAG, "No valid addresses returned");
+                    }
+                }
+                catch (IOException e) {
+                    Log.e(TAG, "Error getting location", e);
+                    // ugh http://code.google.com/p/android/issues/detail?id=8816
+                    currentLocation = new Location("mockLocation");
+                    currentLocation.setLatitude(38.895);
+                    currentLocation.setLongitude(-77.0366667);
+                }
+                centerMap();
             }
         });
         unableToLocate = builder.create();
@@ -78,19 +112,14 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         
     }
     
-    protected void centerMap(Location location) {
+    protected void centerMap() {
         mapController.setZoom(12);
-        currentLocation.getLatitude();
-        GeoPoint initGeoPoint = new GeoPoint((int)(currentLocation.getLatitude() * 1000000.0),
-            (int)(currentLocation.getLongitude() * 1000000.0));
+        GeoPoint initGeoPoint = new GeoPoint((int)(currentLocation.getLatitude() * 1E6),
+            (int)(currentLocation.getLongitude() * 1E6));
         Log.d(TAG, "Centering map at " + initGeoPoint.toString());
         mapController.animateTo(initGeoPoint);
-        AsyncTask<Void, Void, JSONArray> findAndDisplayMarkers = new APITask(mapView, this); 
-        findAndDisplayMarkers.execute((Void[]) null);
-    }
-    
-    protected void displayActivities() {
-        // get 
+        mapController.setCenter(initGeoPoint);
+        Log.d(TAG, "Map now centered at " + mapView.getMapCenter());
     }
 
     /** Register for the updates when Activity is in foreground */
@@ -120,7 +149,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         dialog.dismiss();
         printLocation(location);
         locationManager.removeUpdates(this);
-        centerMap(location);
+        centerMap();
     }
 
     public void onProviderDisabled(String provider) {

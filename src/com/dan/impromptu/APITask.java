@@ -50,22 +50,22 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
         JSONArray root = null;
         // URL=http://impromptudo.com/getEvents/?version=2&swLng=-77.507227&swLat=38.793011&neLng=-76.640680&neLat=39.104871&delta=1
         MapBounds bounds = calculateMapBounds(this.mapView);
-        HttpClient hc = new DefaultHttpClient();  
+        HttpClient hc = new DefaultHttpClient();
+        //String apiUrl = 
         HttpGet get = new HttpGet("http://impromptudo.com/getEvents/?version=2"
             + "&swLng=" + bounds.getSWLng()
             + "&swLat=" + bounds.getSWLat()
             + "&neLng=" + bounds.getNELng()
             + "&neLat=" + bounds.getNELat()
             + "&delta=1");
+        Log.d(TAG, get.getURI().toString());
         
         try {
             HttpResponse rp = hc.execute(get);
             if(rp.getStatusLine().getStatusCode() == HttpStatus.SC_OK)  
             {  
                     String result = EntityUtils.toString(rp.getEntity());
-                    Log.d(TAG, result);
                     root = new JSONArray(result);
-                    Log.d(TAG, "Found " + root.length() + " events");
             }
         } catch (Exception e) {  
             Log.e(TAG, "Error loading JSON", e);  
@@ -78,21 +78,22 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
         List<Overlay> mapOverlays = mapView.getOverlays();
         
         GeoPoint point;
-        for (int i=0; i < array.length(); i++) {
-            try {
-                JSONObject jobj = array.getJSONObject(i);
-                //point = new GeoPoint(37422006, -122084095);
-                point = geoPointFromJSON(jobj);
-                Log.d(TAG, "Putting point at " + point.toString());
-                OverlayItem overlayitem = new OverlayItem(point, "", "" + jobj.getLong("pk"));
-                drawable = this.context.getResources().getDrawable(R.drawable.marker2);
-                itemizedOverlay = new ActivitiesOverlay(drawable, this.context);
-                itemizedOverlay.addOverlay(overlayitem);
-                
-                mapOverlays.add(itemizedOverlay);
-            }
-            catch (JSONException e) {
-                Log.d(TAG, "Exception handling JSON array");
+        if (array != null) {
+            for (int i=0; i < array.length(); i++) {
+                try {
+                    JSONObject jobj = array.getJSONObject(i);
+                    //point = new GeoPoint(37422006, -122084095);
+                    point = geoPointFromJSON(jobj);
+                    OverlayItem overlayitem = new OverlayItem(point, "", "" + jobj.getLong("pk"));
+                    drawable = this.context.getResources().getDrawable(R.drawable.marker2);
+                    itemizedOverlay = new ActivitiesOverlay(drawable, this.context);
+                    itemizedOverlay.addOverlay(overlayitem);
+                    
+                    mapOverlays.add(itemizedOverlay);
+                }
+                catch (JSONException e) {
+                    Log.d(TAG, "Exception handling JSON array");
+                }
             }
         }
     }
@@ -102,7 +103,6 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
         double lat = jobj.getJSONObject("fields").getJSONObject("location").getJSONObject("fields").getDouble("latitude");
         double lon = jobj.getJSONObject("fields").getJSONObject("location").getJSONObject("fields").getDouble("longitude");
 
-        Log.d(TAG, "Parsed lat/lon from JSON=[" + lat + "/" + lon + "]");
         int latE6 = (int)(lat * 1000000.0);
         int lonE6 = (int)(lon * 1000000.0);
         // need to multiply by 1,000,000
