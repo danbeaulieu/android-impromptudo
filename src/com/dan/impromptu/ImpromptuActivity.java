@@ -61,7 +61,6 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         
         coder = new Geocoder(this);
         mapView = (ImpromptuMapView) findViewById(R.id.mapview);
-        ((ImpromptuMapView) mapView).setContext(this);
         mapView.setBuiltInZoomControls(true);
         mapController = mapView.getController();
         Log.d(TAG, "Showing dialog");
@@ -72,9 +71,10 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         
         AlertDialog.Builder builder = new AlertDialog.Builder(ImpromptuActivity.this);
         
-        builder.setMessage("Could not geolocate you.")
+        builder.setMessage("Unable to locate you. Please enter your zip code or city below:")
         .setView(input)
         .setCancelable(false)
+        .setNegativeButton("Cancel", null)
         .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                  Log.d(TAG, "Got value " + input.getText() );
@@ -116,10 +116,9 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         mapController.setZoom(12);
         GeoPoint initGeoPoint = new GeoPoint((int)(currentLocation.getLatitude() * 1E6),
             (int)(currentLocation.getLongitude() * 1E6));
-        Log.d(TAG, "Centering map at " + initGeoPoint.toString());
         mapController.animateTo(initGeoPoint);
         mapController.setCenter(initGeoPoint);
-        Log.d(TAG, "Map now centered at " + mapView.getMapCenter());
+        ((ImpromptuMapView)mapView).setHasUserLocation(true);
     }
 
     /** Register for the updates when Activity is in foreground */

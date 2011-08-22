@@ -58,7 +58,7 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
             + "&neLng=" + bounds.getNELng()
             + "&neLat=" + bounds.getNELat()
             + "&delta=1");
-        Log.d(TAG, get.getURI().toString());
+        Log.d(TAG, "Requesting events with url=" + get.getURI().toString());
         
         try {
             HttpResponse rp = hc.execute(get);
