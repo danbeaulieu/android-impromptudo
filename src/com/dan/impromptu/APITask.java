@@ -2,6 +2,9 @@ package com.dan.impromptu;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -76,7 +79,8 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
     protected void onPostExecute(JSONArray array) {
         Log.d(TAG, "onPostExecute");
         List<Overlay> mapOverlays = mapView.getOverlays();
-        
+        mapOverlays.clear();
+        mapOverlays.add(new LogoOverlay(this.context, R.drawable.ido_md));
         GeoPoint point;
         if (array != null) {
             for (int i=0; i < array.length(); i++) {
@@ -95,6 +99,7 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
                     Log.d(TAG, "Exception handling JSON array");
                 }
             }
+            Log.d(TAG, "Total map overlays = " + mapOverlays.size());
         }
     }
     
@@ -174,8 +179,8 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
           dialog.show();
           return true;
         }
-
-        
     }
+    
+    
 
 }

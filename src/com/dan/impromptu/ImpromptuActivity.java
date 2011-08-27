@@ -12,6 +12,9 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -19,6 +22,7 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
+import com.google.android.maps.Overlay;
 
 import org.json.JSONArray;
 
@@ -46,7 +50,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
     
     ProgressDialog dialog;
     
-    AlertDialog unableToLocate;
+    AlertDialog manualLocate;
     
     Timer timeout;
     
@@ -63,6 +67,9 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         mapView = (ImpromptuMapView) findViewById(R.id.mapview);
         mapView.setBuiltInZoomControls(true);
         mapController = mapView.getController();
+        List<Overlay> overlays = mapView.getOverlays();
+        
+        overlays.add(new LogoOverlay(this, R.drawable.ido_md));
         Log.d(TAG, "Showing dialog");
         dialog = ProgressDialog.show(ImpromptuActivity.this, "", 
             "Loading. Please wait...", true);
@@ -71,7 +78,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         
         AlertDialog.Builder builder = new AlertDialog.Builder(ImpromptuActivity.this);
         
-        builder.setMessage("Unable to locate you. Please enter your zip code or city below:")
+        builder.setMessage(getString(R.string.geoSearch))
         .setView(input)
         .setCancelable(false)
         .setNegativeButton("Cancel", null)
@@ -103,13 +110,33 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
                 centerMap();
             }
         });
-        unableToLocate = builder.create();
+        manualLocate = builder.create();
         //String provider = locationManager.getBestProvider(Criteria.ACCURACY_FINE, true);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         
         AsyncTask<Void, Void, Void> task = new GeoLocateWaitTask();
         task.execute((Void[])null);
         
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.ido_menu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.search:
+            manualLocate.setMessage(getString(R.string.geoSearch));
+            manualLocate.show();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
     }
     
     protected void centerMap() {
@@ -193,7 +220,9 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
             if (currentLocation == null) {
                 dialog.dismiss();
                 Log.d(TAG, "Never found location");
-                unableToLocate.show();
+                // yikes this is ugly
+                manualLocate.setMessage(getString(R.string.geoError) + " " + getString(R.string.geoSearch));
+                manualLocate.show();
             }
         }
     } 

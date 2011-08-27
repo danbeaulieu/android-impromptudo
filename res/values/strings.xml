@@ -2,4 +2,7 @@
 <resources>
     <string name="hello">Hello World, ImpromptuActivity!</string>
     <string name="app_name">ImpromptuDo</string>
+    <string name="search">search</string>
+    <string name="geoError">Unable to locate you.</string>
+    <string name="geoSearch">Please enter your zip code or city below:</string>
 </resources>
