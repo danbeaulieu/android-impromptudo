@@ -6,12 +6,14 @@
     android:layout_height="fill_parent"
     android:theme="@android:style/Theme.NoTitleBar" >
 
-    <com.dan.impromptu.ImpromptuMapView
-        android:id="@+id/mapview"
+<!-- android:apiKey="0Ljdjz00iq3rLJ57sBbwebH1b1PAZmK8WYi4wmQ" debug
+     android:apiKey="0Ljdjz00iq3o4ECprjLSVPCOt3heldOzRwQpICQ" private
+     -->
+    <com.impromptudo.ImpromptuMapView       android:id="@+id/mapview"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:clickable="true"
-        android:apiKey="0Ljdjz00iq3rLJ57sBbwebH1b1PAZmK8WYi4wmQ"
+        android:apiKey="0Ljdjz00iq3o4ECprjLSVPCOt3heldOzRwQpICQ"   
     />
 
 </RelativeLayout>

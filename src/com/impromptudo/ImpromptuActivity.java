@@ -1,4 +1,4 @@
-package com.dan.impromptu;
+package com.impromptudo;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -18,17 +18,15 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import com.impromptudo.R;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 
-import org.json.JSONArray;
-
 import java.io.IOException;
 import java.util.List;
-import java.util.Timer;
 
 public class ImpromptuActivity extends MapActivity implements LocationListener {
     
@@ -52,8 +50,6 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
     
     AlertDialog manualLocate;
     
-    Timer timeout;
-    
     Geocoder coder;
     
     /** Called when the activity is first created. */
@@ -70,6 +66,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         List<Overlay> overlays = mapView.getOverlays();
         
         overlays.add(new LogoOverlay(this, R.drawable.ido_md));
+        
         Log.d(TAG, "Showing dialog");
         dialog = ProgressDialog.show(ImpromptuActivity.this, "", 
             "Loading. Please wait...", true);
@@ -114,7 +111,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         //String provider = locationManager.getBestProvider(Criteria.ACCURACY_FINE, true);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         
-        AsyncTask<Void, Void, Void> task = new GeoLocateWaitTask();
+        AsyncTask<Void, Void, Void> task = new GeoLocateWaitTask(this);
         task.execute((Void[])null);
         
     }
@@ -203,14 +200,21 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
     }
     
     class GeoLocateWaitTask extends AsyncTask<Void, Void, Void> {
+        
+        LocationListener ll;
+        
+        public GeoLocateWaitTask(LocationListener listener) {
+
+            this.ll = listener;
+        }
+
         protected Void doInBackground(Void... params) {
             try {
                 Log.d(TAG, "sleeping");
                 Thread.sleep(5000);
                 Log.d(TAG, "done sleeping");
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Log.e(TAG, "Sleeping thread interrupted, should never happen", e);
             }
             return null;
         }       
@@ -218,6 +222,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         protected void onPostExecute(Void v) {
             Log.d(TAG, "onPostExecute");
             if (currentLocation == null) {
+                locationManager.removeUpdates(this.ll);
                 dialog.dismiss();
                 Log.d(TAG, "Never found location");
                 // yikes this is ugly

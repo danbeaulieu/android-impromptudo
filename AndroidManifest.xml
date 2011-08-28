@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.dan.impromptu"
-      android:versionCode="1"
-      android:versionName="1.0">
+      package="com.impromptudo"
+      android:versionCode="3"
+      android:versionName="1.0.2">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     
-    <application android:icon="@drawable/icon" android:theme="@android:style/Theme.NoTitleBar">
+    <application android:theme="@android:style/Theme.NoTitleBar" android:icon="@drawable/ic_launcher">
         <uses-library android:name="com.google.android.maps" />
-        <activity android:name=".ImpromptuActivity"
+        <activity android:name="ImpromptuActivity"
                   android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

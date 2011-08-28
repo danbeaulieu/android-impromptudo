@@ -1,4 +1,4 @@
-package com.dan.impromptu;
+package com.impromptudo;
 
 import com.google.android.maps.GeoPoint;
 

@@ -1,4 +1,4 @@
-package com.dan.impromptu;
+package com.impromptudo;
 
 import android.content.Context;
 import android.graphics.Canvas;
