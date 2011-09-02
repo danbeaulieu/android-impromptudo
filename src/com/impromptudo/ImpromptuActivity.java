@@ -67,10 +67,6 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         
         overlays.add(new LogoOverlay(this, R.drawable.ido_md));
         
-        Log.d(TAG, "Showing dialog");
-        dialog = ProgressDialog.show(ImpromptuActivity.this, "", 
-            "Loading. Please wait...", true);
-        
         final EditText input = new EditText(this);
         
         AlertDialog.Builder builder = new AlertDialog.Builder(ImpromptuActivity.this);
@@ -111,8 +107,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         //String provider = locationManager.getBestProvider(Criteria.ACCURACY_FINE, true);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         
-        AsyncTask<Void, Void, Void> task = new GeoLocateWaitTask(this);
-        task.execute((Void[])null);
+        new GeoLocateWaitTask(this).execute((Void[]) null);
         
     }
     
@@ -149,8 +144,6 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
     @Override
     protected void onResume() {
         super.onResume();
-        locationManager.requestLocationUpdates(gpsProvider, 20000, 1, this);
-        locationManager.requestLocationUpdates(networkProvider, 20000, 1, this);
     }
     
     /** Stop the updates when Activity is paused */
@@ -199,7 +192,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
             Log.d(TAG, "\n\n Found Location" + location.toString());
     }
     
-    class GeoLocateWaitTask extends AsyncTask<Void, Void, Void> {
+    private class GeoLocateWaitTask extends AsyncTask<Void, Void, Void> {
         
         LocationListener ll;
         
@@ -208,6 +201,12 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
             this.ll = listener;
         }
 
+        protected void onPreExecute() {
+            Log.d(TAG, "Showing dialog");
+            dialog = ProgressDialog.show(ImpromptuActivity.this, "", 
+                "Loading. Please wait...", true);
+        }
+        
         protected Void doInBackground(Void... params) {
             try {
                 Log.d(TAG, "sleeping");

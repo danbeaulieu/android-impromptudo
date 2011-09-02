@@ -13,6 +13,7 @@ import com.google.android.maps.Overlay;
 public class LogoOverlay extends Overlay {
 
     private final Context context;
+    
     private final int drawable;
 
     /**
@@ -20,14 +21,15 @@ public class LogoOverlay extends Overlay {
      * @param drawable the ID of the desired drawable
      */
     public LogoOverlay(Context context, int drawable) {
+        
       this.context = context;
       this.drawable = drawable;
     }
 
     @Override
     public boolean draw(Canvas canvas, MapView mapView, boolean shadow, long when) {
+        
       super.draw(canvas, mapView, shadow);
-
       // Read the image
       Bitmap markerImage = BitmapFactory.decodeResource(context.getResources(), drawable);
       // Draw it, centered around the given coordinates

@@ -37,13 +37,19 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
     Context context;
     
     List<Overlay> mapOverlays;
+    
     Drawable drawable;
+    
     ActivitiesOverlay itemizedOverlay;
+    
+    LogoOverlay logo;
     
     public APITask(MapView mapView, Context context) {
 
         this.mapView = mapView;
         this.context = context;
+        this.drawable = this.context.getResources().getDrawable(R.drawable.marker2);
+        this.logo = new LogoOverlay(this.context, R.drawable.ido_md);
     }
 
     protected JSONArray doInBackground(Void... params) {
@@ -78,25 +84,23 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
         Log.d(TAG, "onPostExecute");
         List<Overlay> mapOverlays = mapView.getOverlays();
         mapOverlays.clear();
-        mapOverlays.add(new LogoOverlay(this.context, R.drawable.ido_md));
-        GeoPoint point;
+        mapOverlays.add(this.logo);
+        
         if (array != null) {
             for (int i=0; i < array.length(); i++) {
                 try {
                     JSONObject jobj = array.getJSONObject(i);
-                    //point = new GeoPoint(37422006, -122084095);
-                    point = geoPointFromJSON(jobj);
+                    GeoPoint point = geoPointFromJSON(jobj);
                     OverlayItem overlayitem = new OverlayItem(point, "", "" + jobj.getLong("pk"));
-                    drawable = this.context.getResources().getDrawable(R.drawable.marker2);
                     itemizedOverlay = new ActivitiesOverlay(drawable, this.context);
                     itemizedOverlay.addOverlay(overlayitem);
-                    
                     mapOverlays.add(itemizedOverlay);
                 }
                 catch (JSONException e) {
                     Log.d(TAG, "Exception handling JSON array");
                 }
             }
+            
             Log.d(TAG, "Total map overlays = " + mapOverlays.size());
         }
     }
