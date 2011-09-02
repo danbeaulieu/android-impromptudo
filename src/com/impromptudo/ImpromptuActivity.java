@@ -140,6 +140,13 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         ((ImpromptuMapView)mapView).setHasUserLocation(true);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        locationManager.requestLocationUpdates(gpsProvider, 20000, 1, this);
+        locationManager.requestLocationUpdates(networkProvider, 20000, 1, this);
+    }
+    
     /** Register for the updates when Activity is in foreground */
     @Override
     protected void onResume() {
