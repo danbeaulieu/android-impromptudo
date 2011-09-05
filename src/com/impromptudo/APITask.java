@@ -1,9 +1,11 @@
 package com.impromptudo;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -34,8 +36,6 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
 
     MapView mapView;
     
-    Context context;
-    
     List<Overlay> mapOverlays;
     
     Drawable drawable;
@@ -44,12 +44,14 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
     
     LogoOverlay logo;
     
-    public APITask(MapView mapView, Context context) {
+    Activity mActivity;
+    
+    public APITask(MapView mapView, Activity activity) {
 
         this.mapView = mapView;
-        this.context = context;
-        this.drawable = this.context.getResources().getDrawable(R.drawable.marker2);
-        this.logo = new LogoOverlay(this.context, R.drawable.ido_md);
+        this.drawable = this.mapView.getContext().getResources().getDrawable(R.drawable.marker2);
+        this.logo = new LogoOverlay(this.mapView.getContext(), R.drawable.ido_md);
+        this.mActivity = activity;
     }
 
     protected JSONArray doInBackground(Void... params) {
@@ -92,7 +94,7 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
                     JSONObject jobj = array.getJSONObject(i);
                     GeoPoint point = geoPointFromJSON(jobj);
                     OverlayItem overlayitem = new OverlayItem(point, "", "" + jobj.getLong("pk"));
-                    itemizedOverlay = new ActivitiesOverlay(drawable, this.context);
+                    itemizedOverlay = new ActivitiesOverlay(drawable);
                     itemizedOverlay.addOverlay(overlayitem);
                     mapOverlays.add(itemizedOverlay);
                 }
@@ -140,12 +142,9 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
 
         private ArrayList<OverlayItem> mOverlays = new ArrayList<OverlayItem>();
         
-        Context mContext;
-        
-        public ActivitiesOverlay(Drawable defaultMarker, Context context) {
+        public ActivitiesOverlay(Drawable defaultMarker) {
 
             super(boundCenterBottom(defaultMarker));
-            mContext = context;
         }
 
         public void addOverlay(OverlayItem overlay) {
@@ -166,19 +165,12 @@ public class APITask extends AsyncTask<Void, Void, JSONArray> {
         
         @Override
         protected boolean onTap(int index) {
+          
           OverlayItem item = mOverlays.get(index);
-          WebView webview = new WebView(context);
-          String url = "http://impromptudo.com/getDetails/" + item.getSnippet() + "/";
-          //webview.loadData(summary, "text/html", "utf-8");
-          webview.loadUrl(url);
-          AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+          Bundle b = new Bundle();
+          b.putString(ImpromptuActivity.BUNDLE_EVENT_ID_KEY, item.getSnippet());
+          mActivity.showDialog(ImpromptuActivity.DIALOG_EVENT_DETAIL, b);
           
-          builder.setView(webview);
-          builder.setCancelable(true);
-          AlertDialog dialog = builder.create();
-          dialog.setCanceledOnTouchOutside(true);
-          
-          dialog.show();
           return true;
         }
     }

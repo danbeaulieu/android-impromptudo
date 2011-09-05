@@ -1,6 +1,7 @@
 package com.impromptudo;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -15,6 +16,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -32,6 +34,16 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
     
     private static final String TAG = "ImpromptuActivity";
     
+    private static final int DIALOG_MANUALLY_LOCATE = 1;
+    
+    private static final int DIALOG_LOCATE_WAIT = 2;
+    
+    public static final int DIALOG_EVENT_DETAIL = 3;
+    
+    private static final int LOCATION_SLEEP_TIME = 10000;
+    
+    public static final String BUNDLE_EVENT_ID_KEY = "id";
+
     LinearLayout linearLayout;
     
     MapView mapView;
@@ -46,10 +58,6 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
     
     Location currentLocation = null;
     
-    ProgressDialog dialog;
-    
-    AlertDialog manualLocate;
-    
     Geocoder coder;
     
     /** Called when the activity is first created. */
@@ -62,53 +70,86 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         coder = new Geocoder(this);
         mapView = (ImpromptuMapView) findViewById(R.id.mapview);
         mapView.setBuiltInZoomControls(true);
+        // so ugly, but need to get reference of activity to APITask...
+        ((ImpromptuMapView) mapView).setActivity(this);
         mapController = mapView.getController();
         List<Overlay> overlays = mapView.getOverlays();
         
         overlays.add(new LogoOverlay(this, R.drawable.ido_md));
         
-        final EditText input = new EditText(this);
-        
-        AlertDialog.Builder builder = new AlertDialog.Builder(ImpromptuActivity.this);
-        
-        builder.setMessage(getString(R.string.geoSearch))
-        .setView(input)
-        .setCancelable(false)
-        .setNegativeButton("Cancel", null)
-        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                 Log.d(TAG, "Got value " + input.getText() );
-                 try {
-                    List<Address> addresses = coder.getFromLocationName(input.getText().toString(), 1);
-                    if (addresses != null && !addresses.isEmpty()) {
-                        Address address = addresses.get(0);
-                        Location loc = new Location("geocoder");
-                        loc.setLatitude(address.getLatitude());
-                        loc.setLongitude(address.getLongitude());
-                        
-                        currentLocation = loc;
-                        
-                    }
-                    else {
-                        Log.e(TAG, "No valid addresses returned");
-                    }
-                }
-                catch (IOException e) {
-                    Log.e(TAG, "Error getting location", e);
-                    // ugh http://code.google.com/p/android/issues/detail?id=8816
-                    currentLocation = new Location("mockLocation");
-                    currentLocation.setLatitude(38.895);
-                    currentLocation.setLongitude(-77.0366667);
-                }
-                centerMap();
-            }
-        });
-        manualLocate = builder.create();
-        //String provider = locationManager.getBestProvider(Criteria.ACCURACY_FINE, true);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         
-        new GeoLocateWaitTask(this).execute((Void[]) null);
+        new GeoLocateWaitTask().execute((Void[]) null);
+    }
+    
+    @Override
+    protected Dialog onCreateDialog(int i) {
+        return onCreateDialog(i, null);
+    }
+    
+    @Override
+    protected Dialog onCreateDialog(int i, Bundle b) {
         
+        switch(i) {
+            case DIALOG_MANUALLY_LOCATE:
+                final EditText input = new EditText(this);
+                return new AlertDialog.Builder(ImpromptuActivity.this)
+                    .setMessage(getString(R.string.geoSearch))
+                    .setView(input)
+                    .setCancelable(false)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                             Log.d(TAG, "Got value " + input.getText() );
+                             try {
+                                List<Address> addresses = coder.getFromLocationName(input.getText().toString(), 1);
+                                if (addresses != null && !addresses.isEmpty()) {
+                                    Address address = addresses.get(0);
+                                    Location loc = new Location("geocoder");
+                                    loc.setLatitude(address.getLatitude());
+                                    loc.setLongitude(address.getLongitude());
+                                    
+                                    currentLocation = loc;
+                                    
+                                }
+                                else {
+                                    Log.e(TAG, "No valid addresses returned");
+                                }
+                            }
+                            catch (IOException e) {
+                                Log.e(TAG, "Error getting location", e);
+                                // ugh http://code.google.com/p/android/issues/detail?id=8816
+                                currentLocation = new Location("mockLocation");
+                                currentLocation.setLatitude(38.895);
+                                currentLocation.setLongitude(-77.0366667);
+                            }
+                            centerMap();
+                        }
+                    })
+                    .create();
+            case DIALOG_LOCATE_WAIT:
+                ProgressDialog p = new ProgressDialog(this);
+                p.setMessage("Waiting for location");
+                p.setCancelable(true);
+                p.setIndeterminate(true);
+                p.setTitle("");
+                return p;
+            case DIALOG_EVENT_DETAIL:
+                WebView webview = new WebView(this);
+                String url = "http://impromptudo.com/getDetails/" + b.getString(BUNDLE_EVENT_ID_KEY) + "/";
+                //webview.loadData(summary, "text/html", "utf-8");
+                webview.loadUrl(url);
+                AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                    .setView(webview)
+                    .setCancelable(true);
+                
+                AlertDialog dialog = builder.create();
+                dialog.setCanceledOnTouchOutside(true);
+                
+                return dialog;
+            default:
+                return null;
+        }
     }
     
     @Override
@@ -123,8 +164,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         // Handle item selection
         switch (item.getItemId()) {
         case R.id.search:
-            manualLocate.setMessage(getString(R.string.geoSearch));
-            manualLocate.show();
+            showDialog(DIALOG_MANUALLY_LOCATE);
             return true;
         default:
             return super.onOptionsItemSelected(item);
@@ -169,7 +209,7 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
 
     public void onLocationChanged(Location location) {
         currentLocation = location;
-        dialog.dismiss();
+        dismissDialog(DIALOG_LOCATE_WAIT);
         printLocation(location);
         locationManager.removeUpdates(this);
         centerMap();
@@ -199,25 +239,20 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
             Log.d(TAG, "\n\n Found Location" + location.toString());
     }
     
-    private class GeoLocateWaitTask extends AsyncTask<Void, Void, Void> {
+    protected void stopLocationUpdates() {
+        locationManager.removeUpdates(this);
+    }
+    
+    class GeoLocateWaitTask extends AsyncTask<Void, Void, Void> {
         
-        LocationListener ll;
-        
-        public GeoLocateWaitTask(LocationListener listener) {
-
-            this.ll = listener;
-        }
-
         protected void onPreExecute() {
             Log.d(TAG, "Showing dialog");
-            dialog = ProgressDialog.show(ImpromptuActivity.this, "", 
-                "Loading. Please wait...", true);
+            showDialog(DIALOG_LOCATE_WAIT);
         }
         
         protected Void doInBackground(Void... params) {
             try {
-                Log.d(TAG, "sleeping");
-                Thread.sleep(5000);
+                Thread.sleep(LOCATION_SLEEP_TIME);
                 Log.d(TAG, "done sleeping");
             } catch (InterruptedException e) {
                 Log.e(TAG, "Sleeping thread interrupted, should never happen", e);
@@ -226,14 +261,13 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         }       
 
         protected void onPostExecute(Void v) {
-            Log.d(TAG, "onPostExecute");
             if (currentLocation == null) {
-                locationManager.removeUpdates(this.ll);
-                dialog.dismiss();
                 Log.d(TAG, "Never found location");
+                stopLocationUpdates();
+                dismissDialog(DIALOG_LOCATE_WAIT);
                 // yikes this is ugly
-                manualLocate.setMessage(getString(R.string.geoError) + " " + getString(R.string.geoSearch));
-                manualLocate.show();
+                //manualLocate.setMessage(getString(R.string.geoError) + " " + getString(R.string.geoSearch));
+                showDialog(DIALOG_MANUALLY_LOCATE);
             }
         }
     } 
