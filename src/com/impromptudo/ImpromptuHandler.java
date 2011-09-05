@@ -1,11 +1,10 @@
 package com.impromptudo;
 
-import com.google.android.maps.MapView;
-
 import android.app.Activity;
-import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
+
+import com.google.android.maps.MapView;
 
 
 public class ImpromptuHandler extends Handler {

@@ -79,7 +79,9 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         
-        new GeoLocateWaitTask().execute((Void[]) null);
+        if (currentLocation == null) {
+            new GeoLocateWaitTask().execute((Void[]) null);
+        }
     }
     
     @Override
@@ -261,12 +263,12 @@ public class ImpromptuActivity extends MapActivity implements LocationListener {
         }       
 
         protected void onPostExecute(Void v) {
+            dismissDialog(DIALOG_LOCATE_WAIT);
             if (currentLocation == null) {
                 Log.d(TAG, "Never found location");
                 stopLocationUpdates();
-                dismissDialog(DIALOG_LOCATE_WAIT);
                 // yikes this is ugly
-                //manualLocate.setMessage(getString(R.string.geoError) + " " + getString(R.string.geoSearch));
+                // manualLocate.setMessage(getString(R.string.geoError) + " " + getString(R.string.geoSearch));
                 showDialog(DIALOG_MANUALLY_LOCATE);
             }
         }

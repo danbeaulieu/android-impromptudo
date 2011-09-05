@@ -1,15 +1,11 @@
 package com.impromptudo;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.webkit.WebView;
 
-import com.impromptudo.R;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapView;
